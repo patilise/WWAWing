@@ -835,7 +835,7 @@ export class Macro {
 
     private _executeSoundMacro(): void {
         this._concatEmptyArgs(1);
-        var id = parseInt(this.macroArgs[0]);
+        var id = this._parseInt(0);
         this._wwa.playSound(id);
     }
     private _executeGamePadButtonMacro(): void {

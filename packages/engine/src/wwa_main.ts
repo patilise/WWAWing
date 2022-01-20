@@ -4658,6 +4658,9 @@ export class WWA {
     public setPlayerStatus(type: MacroStatusIndex, value: number): void {
         if (type === MacroStatusIndex.ENERGY) {
             this._player.setEnergy(value);
+            if (this._player.isDead()) {
+                this.gameover();
+            }
         } else if (type === MacroStatusIndex.STRENGTH) {
             this._player.setStrength(value);
         } else if (type === MacroStatusIndex.DEFENCE) {
