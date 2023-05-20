@@ -251,6 +251,8 @@ export class WWA {
     private _startTime: number;
     private _dumpElement: HTMLElement;
 
+    private evalCalcWwaNode: ExpressionParser2.EvalCalcWwaNode;
+
     /** ユーザー定義スクリプト関数 */
     private userDefinedFunctions: { [key: string]: WWANode }
 
@@ -1109,6 +1111,8 @@ export class WWA {
                 }
             })
         });
+        /** スクリプトパーサーを作成する */
+        this.evalCalcWwaNode = new ExpressionParser2.EvalCalcWwaNode(this);
     }
 
     public getUserScript(functionName: string): WWANode | null {
@@ -2434,6 +2438,12 @@ export class WWA {
                 const varNum = i.toString(10);
                 this._dumpElement.querySelector(`.var${varNum}`).textContent = this._wwaData.userVar[i] + "";
             }
+        }
+
+        /** フレームごとにユーザー定義独自関数を呼び出す */
+        const frameFunc = this.userDefinedFunctions["CALL_FRAME"];
+        if(frameFunc) {
+            this.evalCalcWwaNode.evalWwaNode(frameFunc);
         }
     }
     public vibration(isStrong: boolean) {
@@ -4379,6 +4389,13 @@ export class WWA {
     }
 
     private _quickSave(callInfo: number): string {
+        /** セーブ時にユーザ定義独自関数を呼び出す */
+        /** 処理内容もセーブの中身に入れ込めるようセーブ処理前に実行する */
+        const func = this.userDefinedFunctions["CALL_SAVE"];
+        if(func) {
+            this.evalCalcWwaNode.evalWwaNode(func);
+        }
+
         var qd = <WWAData>JSON.parse(JSON.stringify(this._wwaData));
         
         var pc = this._player.getPosition().getPartsCoord();
@@ -4419,6 +4436,7 @@ export class WWA {
         qd.mapAttribute = void 0;
         qd.objectAttribute = void 0;
 
+        /** ユーザー定義 */
         switch (callInfo) {
             case ChoiceCallInfo.CALL_BY_QUICK_SAVE:
                 this._messageWindow.save(this._cvs, qd);
@@ -6053,7 +6071,7 @@ font-weight: bold;
         this.setUserVar(num, this._wwaData.playTime);
     }
     // 現在時刻セット
-    private setNowPlayTime(): void {
+    public setNowPlayTime(): void {
         const _nowTime = new Date();
         this._wwaData.playTime += (_nowTime.getTime() - this._startTime);
         this._startTime = _nowTime.getTime();
@@ -6288,7 +6306,7 @@ font-weight: bold;
         }
     }
     
-    /** DEBUG用 */
+    /** DEBUG用: 暫定的にXキーを押したら呼ばれる */
     private _debugEvalString() {
         if (!this._player.isControllable()) {
             return;
@@ -6298,9 +6316,8 @@ font-weight: bold;
             const getElement: any = document.getElementsByClassName('eval-string-input-area')[0];
             const baseEvalStr = getElement.value;
             const nodes = this.convertWwaNodes(baseEvalStr);
-            const evalWWANode = new ExpressionParser2.EvalCalcWwaNode(this);
             console.log("c:");
-            const c = evalWWANode.evalWwaNodes(nodes);
+            const c = this.evalCalcWwaNode.evalWwaNodes(nodes);
             console.log(c);
         } catch(e) {
             console.error(e);
