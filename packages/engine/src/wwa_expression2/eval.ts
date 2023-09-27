@@ -1,5 +1,5 @@
 import { SystemMessage } from "@wwawing/common-interface";
-import { Coord, MacroStatusIndex, PartsType } from "../wwa_data";
+import { Coord, Direction, MacroStatusIndex, PartsType } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 
@@ -394,7 +394,7 @@ export class EvalCalcWwaNode {
       case "MOVE": {
           this._checkArgsLength(1, node);
           const direction = Number(this.evalWwaNode(node.value[0]))
-          if(direction <= 0 || direction > 9) {
+          if (![Direction.LEFT, Direction.DOWN, Direction.RIGHT, Direction.UP].includes(direction)) {
             throw Error("MOVEの移動先は2/4/6/8で指定してください！")
           }
           this.generator.wwa.movePlayer(direction);
